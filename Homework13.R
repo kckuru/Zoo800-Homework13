@@ -88,39 +88,58 @@ results
 # All starting values converged to the same solution, confirming the global minimum.
 
 # ==============================
-# Objective 3 (repeat)
+# Objective 3 — Maximum Likelihood Estimation
 # ==============================
 
-# ---- Objective 3a: Grid search again ----
+# ---- Objective 3a: Grid search MLE ----
 
+# Negative log-likelihood function
+NLL <- function(b0, b1, sigma, x, y) {
+  if(sigma <= 0) return(Inf)  # sigma must be positive
+  n <- length(y)
+  residuals <- y - (b0 + b1 * x)
+  -sum(dnorm(residuals, mean = 0, sd = sigma, log = TRUE))
+}
+
+# Parameter grids
 b0_vals <- seq(-3, 1, by = 0.01)
 b1_vals <- seq(1.1, 1.6, by = 0.01)
+sigma_vals <- seq(0.1, 5, by = 0.1)
 
-grid <- expand.grid(b0 = b0_vals, b1 = b1_vals)
+grid <- expand.grid(b0 = b0_vals, b1 = b1_vals, sigma = sigma_vals)
+grid$NLL <- mapply(NLL, grid$b0, grid$b1, grid$sigma, MoreArgs = list(x = x, y = y))
 
-grid$RSS <- mapply(RSS, grid$b0, grid$b1, MoreArgs = list(x = x, y = y))
-
-best_grid <- grid[which.min(grid$RSS), ]
+best_grid <- grid[which.min(grid$NLL), ]
 best_grid
+# Gives the MLE estimates of beta0, beta1, and sigma
 
-# ---- Objective 3b: optim again ----
+# ---- Objective 3b: optim() MLE ----
 
-fit_optim <- optim(c(0, 0), RSS_opt, x = x, y = y)
-fit_optim$par
-fit_optim$convergence
-# These again match the OLS estimates closely!
+NLL_opt <- function(par, x, y) {
+  b0 <- par[1]
+  b1 <- par[2]
+  sigma <- par[3]
+  if(sigma <= 0) return(Inf)
+  -sum(dnorm(y, mean = b0 + b1 * x, sd = sigma, log = TRUE))
+}
 
-# ---- Objective 3c: multiple starts ----
+start <- c(0, 1.3, 1)  # initial guesses for b0, b1, sigma
+fit_MLE <- optim(start, NLL_opt, x = x, y = y, method = "L-BFGS-B", lower = c(-Inf, -Inf, 1e-6))
 
-starts <- list(c(0,0), c(20,-2), c(-10,1), c(5,5))
+fit_MLE$par
+fit_MLE$convergence  # 0 = success
+
+# ---- Objective 3c: multiple starting values ----
+
+starts <- list(c(0,1,1), c(0.5,1.2,0.5), c(-1,1.5,2), c(0,1.4,0.1))
 
 results <- lapply(starts, function(s) {
-  optim(par = s, fn = RSS_opt, x = x, y = y)$par
+  optim(s, NLL_opt, x = x, y = y, method = "L-BFGS-B", lower = c(-Inf,-Inf,1e-6))$par
 })
 
 names(results) <- c("start1","start2","start3","start4")
 results
-# All starting values again converged to the same solution.
+# All starting values should converge to the same MLE solution
 
 # ==============================
 # Objective 4 — Interpretation
