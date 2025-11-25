@@ -5,9 +5,7 @@
 # Group members: Keeley Kuru
 # Date: 11/25/25
 
-# Data from classmate (Homework 11)
-# In this simulated dataset, brook trout activity (movements/hr) declines as stream temperature increases. Streams with cold-water refugia have higher baseline activity and a weaker decline in activity with increasing temperature compared to streams without refugia. The ANCOVA model tests whether the slopes of activity–temperature relationships differ between the two stream types, answering this ecological question: Do brook trout with cold-water refugia maintain higher activity levels as temperatures rise compared to those without refugia?
-  
+# Data from classmate below (from Homework 11)
 set.seed(123)
 
 # intercept for streams with cold refugia
@@ -44,9 +42,11 @@ data <- data.frame(temp, group, activity)
 fit <- lm(activity ~ temp * group, data = data)
 summary(fit)
 
-# ===== Objective 1 ===== #
-df <- subset(data, group == "ColdRefugia")
 
+# ===== Objective 1 for Homework 13 ===== #
+df <- subset(data, group == "ColdRefugia") # select only ColdRefugia group
+
+# define x and y
 x <- df$temp
 y <- df$activity
 
@@ -55,9 +55,12 @@ beta0_hat <- mean(y) - beta1_hat * mean(x)
 
 beta0_hat
 beta1_hat
+# These give the true OLS estimates for a simple linear regression.
+
 
 # ===== Objective 2 ===== #
 # Objective 2a
+
 # Define RSS function
 RSS <- function(b0, b1, x, y) {
   sum((y - (b0 + b1 * x))^2)
