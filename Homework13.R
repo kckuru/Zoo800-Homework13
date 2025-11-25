@@ -8,7 +8,7 @@
 # ==============================
 # Load the dragon dataset
 # ==============================
-dragon <- read.csv("dragon_data.csv")   # update path if needed
+dragon <- read.csv("dragon_data.csv")
 
 # Define x and y
 x <- dragon$size
